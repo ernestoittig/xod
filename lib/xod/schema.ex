@@ -19,6 +19,7 @@ defmodule Xod.Common do
       x when is_number(x) -> :number
       x when is_boolean(x) -> :boolean
       x when is_nil(x) -> nil
+      x when is_atom(x) -> :atom
       _otherwise -> :unknown
     end
   end
@@ -38,6 +39,7 @@ defmodule Xod.Common do
     end)
   end
 
+  # coveralls-ignore-start
   defp set_field(field_name, type) do
     spec_call = {field_name, [], [quote(do: t()), type]}
     call = {field_name, [], [quote(do: schema), quote(do: value)]}
@@ -51,4 +53,5 @@ defmodule Xod.Common do
   defmacro set_fields(fields) do
     {:__block__, [], Enum.map(fields, fn {k, t} -> set_field(k, t) end)}
   end
+  # coveralls-ignore-end
 end

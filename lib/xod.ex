@@ -116,6 +116,51 @@ defmodule Xod do
   defdelegate tuple(schemata, opts \\ []), to: Xod.Tuple, as: :new
 
   @doc """
+  Schema for validating lists
+
+  Must pass an argument, which is the schema used to validate list items.
+
+  It accepts the following options:
+    - `keys` :: `keyword/0` — A list of key-or-index value pairs. They are used
+    to match against list values instead of the element schema.
+    - `max` :: `t:non_neg_integer/0` — Max length of the list (inclusive)
+    - `min` :: `t:non_neg_integer/0` — Min length of the list (inclusive)
+    - `length` :: `t:non_neg_integer/0` — Exact length of the list
+    - `coerce` :: `t:boolean/0` — If true, when a map is provided it will be
+    converted to a list. Defaults to true
+
+  ## Examples
+
+      iex> Xod.parse Xod.list(Xod.tuple({Xod.string(), Xod.number()})), [{"a", 13.0}]
+      {:ok, [{"a", 13.0}]}
+      
+      iex> Xod.parse! Xod.list(Xod.number()), [[], %{}]
+      ** (Xod.XodError) Expected number, got list (in path [0])
+      Expected number, got map (in path [1])
+  """
+  @doc section: :schemas
+  defdelegate list(element, opts \\ []), to: Xod.List, as: :new
+
+  @doc """
+  Shorthand for `Xod.list(Xod.never(), keys: keys)`
+
+  Takes the same options as `Xod.list/2`
+
+  ## Examples
+  
+      iex> Xod.parse Xod.keyword([x: Xod.number()]), [x: 13.0]
+      {:ok, [x: 13.0]}
+
+      iex> Xod.parse! Xod.keyword([{0, Xod.number()}]), ["abc"]
+      ** (Xod.XodError) Expected number, got string (in path [0])
+  """
+  @doc section: :schemas
+  @spec keyword(list(), Xod.List.args()) :: Xod.List.t()
+  def keyword(keys, opts \\ []) do
+    list(never(), [{:keys, keys} | opts])
+  end
+
+  @doc """
   Schema for validating maps
 
   Must pass an argument, which is a map values to schemata.
@@ -150,6 +195,19 @@ defmodule Xod do
   @doc section: :schemas
   defdelegate map(map, options \\ []), to: Xod.Map, as: :new
 
+  # Utilities
+  # =========
+
+  @doc """
+  Schema that never matches any value
+
+  ## Example
+       iex> Xod.parse!(Xod.never(), :some_value)
+       ** (Xod.XodError) Expected never, got atom (in path [])
+  """
+  @doc section: :utils
+  @spec never() :: Xod.Never.t()
+  defdelegate never(), to: Xod.Never, as: :new
   # Modifiers
   # =========
 
@@ -168,32 +226,42 @@ defmodule Xod do
   defdelegate validate(schema, value), to: Xod.String
 
   @doc """
-  Set the `max` option on a string schema
+  Set the `max` option on a string or list schema
 
-  See: `Xod.string/1`
+  See: `Xod.string/1` and `Xod.list/2`
 
   ## Example
 
       iex> Xod.parse!(Xod.string() |> Xod.max(4), "12345")
       ** (Xod.XodError) String must contain at most 4 character(s) (in path [])
+      
+      iex> Xod.parse!(Xod.list(Xod.number()) |> Xod.max(4), [1, 2, 3, 4, 5])
+      ** (Xod.XodError) List must contain at most 4 character(s) (in path [])
   """
   @doc section: :mods
-  @spec max(Xod.String.t(), non_neg_integer()) :: Xod.String.t()
-  defdelegate max(schema, value), to: Xod.String
+  @spec max(Xod.String.t() | Xod.List.t(), non_neg_integer()) :: Xod.String.t() | Xod.List.t()
+  def max(schema = %Xod.String{}, value), do: Xod.String.max(schema, value)
+
+  def max(schema = %Xod.List{}, value), do: Xod.List.max(schema, value)
 
   @doc """
-  Set the `min` option on a string schema
+  Set the `min` option on a string or list schema
 
-  See: `Xod.string/1`
+  See: `Xod.string/1` and `Xod.list/2`
 
   ## Example
 
       iex> Xod.parse!(Xod.string() |> Xod.min(5), "1234")
       ** (Xod.XodError) String must contain at least 5 character(s) (in path [])
+      
+      iex> Xod.parse!(Xod.list(Xod.number()) |> Xod.min(5), [1, 2, 3, 4])
+      ** (Xod.XodError) List must contain at least 5 character(s) (in path [])
   """
   @doc section: :mods
-  @spec min(Xod.String.t(), non_neg_integer()) :: Xod.String.t()
-  defdelegate min(schema, value), to: Xod.String
+  @spec min(Xod.String.t() | Xod.List.t(), non_neg_integer()) :: Xod.String.t() | Xod.List.t()
+  def min(schema = %Xod.String{}, value), do: Xod.String.min(schema, value)
+
+  def min(schema = %Xod.List{}, value), do: Xod.List.min(schema, value)
 
   @doc """
   Set the `length` option on a string schema
@@ -205,12 +273,28 @@ defmodule Xod do
       iex> Xod.parse!(Xod.string() |> Xod.length(5), "1234")
       ** (Xod.XodError) String must contain exactly 5 character(s) (in path [])
       
-      iex> Xod.parse!(Xod.string() |> Xod.length(3), "1234")
-      ** (Xod.XodError) String must contain exactly 3 character(s) (in path [])
+      iex> Xod.parse!(Xod.list(Xod.number()) |> Xod.length(3), [1, 2, 3, 4])
+      ** (Xod.XodError) List must contain exactly 3 character(s) (in path [])
   """
   @doc section: :mods
-  @spec length(Xod.String.t(), non_neg_integer()) :: Xod.String.t()
-  defdelegate length(schema, value), to: Xod.String
+  @spec length(Xod.String.t() | Xod.List.t(), non_neg_integer()) :: Xod.String.t() | Xod.List.t()
+  def length(schema = %Xod.String{}, value), do: Xod.String.length(schema, value)
+
+  def length(schema = %Xod.List{}, value), do: Xod.List.length(schema, value)
+
+  @doc """
+  Changes a list or string schema to only match non-empty values
+
+  See: `Xod.string/1` and `Xod.list/2`
+
+  ## Example
+
+      iex> Xod.parse!(Xod.string() |> Xod.nonempty(), "")
+      ** (Xod.XodError) String must contain at least 1 character(s) (in path [])
+  """
+  @doc section: :mods
+  @spec nonempty(Xod.String.t() | Xod.List.t()) :: Xod.String.t() | Xod.List.t()
+  def nonempty(schema), do: Xod.min(schema, 1)
 
   @doc """
   Set the `regex` option on a string schema
