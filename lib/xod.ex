@@ -35,11 +35,11 @@ defmodule Xod do
 
   It accepts the following options:
 
-   - `validate` :: `t:boolean()` — Check string is valid UTF-8, defaults to `true`
-   - `max` :: `t:non_neg_integer()` — Max length of the string (inclusive)
-   - `min` :: `t:non_neg_integer()` — Min length of the string (inclusive)
-   - `length` :: `t:non_neg_integer()` — Exact length of the string
-   - `regex` :: `t:Regex.t()` — Regular expression the string must match
+   - `validate` :: `t:boolean/0` — Check string is valid UTF-8, defaults to `true`
+   - `max` :: `t:non_neg_integer/0` — Max length of the string (inclusive)
+   - `min` :: `t:non_neg_integer/0` — Min length of the string (inclusive)
+   - `length` :: `t:non_neg_integer/0` — Exact length of the string
+   - `regex` :: `t:Regex.t/0` — Regular expression the string must match
 
   ## Examples
 
@@ -58,12 +58,12 @@ defmodule Xod do
 
   It accepts the following options:
 
-    - lt :: `t:number()` — Check number is less than value
-    - le :: `t:number()` — Check number is less than or equal to value
-    - gt :: `t:number()` — Check number is greater than value
-    - ge :: `t:number()` — Check number is greater than or equal to value
-    - int :: `t:boolean()` — Whether number must be integer, defaults to `false`
-    - step :: `t:integer()` — Check number is multiple of value. Implies `int`
+    - lt :: `t:number/0` — Check number is less than value
+    - le :: `t:number/0` — Check number is less than or equal to value
+    - gt :: `t:number/0` — Check number is greater than value
+    - ge :: `t:number/0` — Check number is greater than or equal to value
+    - int :: `t:boolean/0` — Whether number must be integer, defaults to `false`
+    - step :: `t:integer/0` — Check number is multiple of value. Implies `int`
 
   ## Examples
 
@@ -80,7 +80,7 @@ defmodule Xod do
   Schema for validationg booleans
 
   It accepts the following options:
-    - `coerce` :: `t:boolean()` — Coerce truthy or falsy values to boolean, defaults to `false`
+    - `coerce` :: `t:boolean/0` — Coerce truthy or falsy values to boolean, defaults to `false`
 
   ## Examples
 
@@ -99,7 +99,7 @@ defmodule Xod do
   Must pass argument, which is a tuple of other schemata
 
   It accepts the following options:
-    - `coerce` :: `t:boolean()` — Coerce lists into tuples, defaults to `true`
+    - `coerce` :: `t:boolean/0` — Coerce lists into tuples, defaults to `true`
 
   ## Examples
 
@@ -114,6 +114,41 @@ defmodule Xod do
   """
   @doc section: :schemas
   defdelegate tuple(schemata, opts \\ []), to: Xod.Tuple, as: :new
+
+  @doc """
+  Schema for validating maps
+
+  Must pass an argument, which is a map values to schemata.
+
+  It accepts the following options:
+    - `foreign_keys` :: `t:Xod.Map.foreign_keys/0` — This option determines
+    what happens when there are unknown keys in the map. If set to :strip, the
+    entries are dropped; if set to :strict, an error is returned; if set to
+    passthrough, the entries are included _as is_; and if set to a schema, it is
+    used to parse and validate each entry.
+    - `coerce` :: `t:boolean/0` — If true, when a list is parsed, it is
+    converted to a map using the following algorithm: if an item is a 2-tuple,
+    it is included as a key-value pair; if not, the index is used as key.
+    Defaults to `true`
+    - `key_coerce` :: `t:boolean/0` — If true, not only are the passed keys
+    checked, but also their string representations. This is useful to transform
+    string keys into atom keys without creating atoms at runtime. Defaults to
+    false
+    - `struct` :: `t:module/0` | `t:struct/0` — If provided, map will be
+    converted to struct after parsing
+
+  ## Examples
+
+      iex> Xod.parse(
+      ...>   Xod.map(%{my_key: Xod.number(), other: Xod.string()}, key_coerce: true),
+      ...>   %{"my_key" => 13, other: "bar baz"})
+      {:ok, %{my_key: 13, other: "bar baz"}}
+      
+      iex> Xod.parse! Xod.map(%{x: Xod.number()}), %{x: true}
+      ** (Xod.XodError) Expected number, got boolean (in path [:x])
+  """
+  @doc section: :schemas
+  defdelegate map(map, options \\ []), to: Xod.Map, as: :new
 
   # Modifiers
   # =========
@@ -330,4 +365,32 @@ defmodule Xod do
   @doc section: :mods
   @spec nonpositive(Xod.Number.t()) :: Xod.Number.t()
   defdelegate nonpositive(schema), to: Xod.Number
+
+  @doc """
+  Gets the underlying schema map
+
+  ## Example
+
+      iex> my_schema = Xod.map %{x: Xod.boolean()}
+      iex> Xod.shape my_schema
+      %{x: %Xod.Boolean{}}
+  """
+  @doc section: :mods
+  @spec shape(Xod.Map.t()) :: map()
+  defdelegate shape(schema), to: Xod.Map
+
+  @doc """
+  Sets the `foreign_keys` option of the map to the provided schema
+
+  See: `Xod.map/2`
+
+  ## Example
+
+      iex> my_schema = Xod.map(%{}) |> Xod.check_all(Xod.number())
+      iex> Xod.parse!(my_schema, %{key: "abc"})
+      ** (Xod.XodError) Expected number, got string (in path [:key])
+  """
+  @doc section: :mods
+  @spec check_all(Xod.Map.t(), Xod.Schema.t()) :: map()
+  defdelegate check_all(schema, check), to: Xod.Map
 end

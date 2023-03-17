@@ -23,6 +23,21 @@ defmodule Xod.Common do
     end
   end
 
+  @doc false
+  @spec kv_from_list(list()) :: [{atom() | non_neg_integer(), term()}]
+  def kv_from_list(l) do
+    Stream.with_index(l)
+    |> Enum.map(fn {x, i} ->
+      case x do
+        {k, v} ->
+          {k, v}
+
+        other ->
+          {i, other}
+      end
+    end)
+  end
+
   defp set_field(field_name, type) do
     spec_call = {field_name, [], [quote(do: t()), type]}
     call = {field_name, [], [quote(do: schema), quote(do: value)]}
