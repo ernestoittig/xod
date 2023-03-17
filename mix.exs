@@ -11,6 +11,13 @@ defmodule Xod.MixProject do
       elixir: "~> 1.11",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
+      test_coverage: [tool: ExCoveralls],
+      preferred_cli_env: [
+        coveralls: :test,
+        "coveralls.detail": :test,
+        "coveralls.post": :test,
+        "coveralls.html": :test
+      ],
       description: "Parsing and schema validation library for Elixir",
       name: "Xod",
       package: package(),
@@ -26,12 +33,18 @@ defmodule Xod.MixProject do
   defp deps do
     [
       {:dialyxir, "~> 1.0", only: [:dev], runtime: false},
-      {:ex_doc, "~> 0.27", only: :dev, runtime: false}
+      {:ex_doc, "~> 0.27", only: :dev, runtime: false},
+      {:excoveralls, "~> 0.10", only: :test},
     ]
   end
 
   defp docs do
     [
+      groups_for_docs: [
+        Schemas: &(&1[:section] == :schemas),
+        Utilities: &(&1[:section] == :utils),
+        Modifiers: &(&1[:section] == :mods)
+      ]
     ]
   end
 
