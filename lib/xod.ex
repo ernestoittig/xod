@@ -27,7 +27,7 @@ defmodule Xod do
     end
   end
 
-  # Schemas
+  # Schemata
   # =======
 
   @doc """
@@ -92,6 +92,28 @@ defmodule Xod do
   """
   @doc section: :schemas
   defdelegate boolean(opts \\ []), to: Xod.Boolean, as: :new
+
+  @doc """
+  Schema for validating tuples
+
+  Must pass argument, which is a tuple of other schemata
+
+  It accepts the following options:
+    - `coerce` :: `t:boolean()` — Coerce lists into tuples, defaults to `true`
+
+  ## Examples
+
+      iex> Xod.parse Xod.tuple({Xod.number(), Xod.number()}), {5, 8}
+      {:ok, {5, 8}}
+      
+      iex> Xod.parse! Xod.tuple({Xod.number(), Xod.number()}), %{0 => 5, 1 => 8}
+      ** (Xod.XodError) Expected tuple, got map (in path [])
+      
+      iex> Xod.parse! Xod.tuple({Xod.number(), Xod.number()}), {1, []}
+      ** (Xod.XodError) Expected number, got list (in path [1])
+  """
+  @doc section: :schemas
+  defdelegate tuple(schemata, opts \\ []), to: Xod.Tuple, as: :new
 
   # Modifiers
   # =========

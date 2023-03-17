@@ -9,7 +9,7 @@ the [Typescript library Zod](https://github.com/colinhacks/zod). A schema
 refers broadly to a specification used to validate and transform any value, from
 a simple number to a complex nested object.
 
-Xod provides a functional API. The default schemas have no side effects and use
+Xod provides a functional API. The default schemata have no side effects and use
 only immutable state.
 
 Xod is also extensible. Apart from using the helper schemata provided, one can

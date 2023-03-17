@@ -41,7 +41,7 @@ defmodule Xod.MixProject do
   defp docs do
     [
       groups_for_docs: [
-        Schemas: &(&1[:section] == :schemas),
+        Schemata: &(&1[:section] == :schemas),
         Utilities: &(&1[:section] == :utils),
         Modifiers: &(&1[:section] == :mods)
       ]
