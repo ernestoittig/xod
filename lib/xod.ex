@@ -54,6 +54,29 @@ defmodule Xod do
   defdelegate string(opts \\ []), to: Xod.String, as: :new
 
   @doc """
+  Schema for validating numbers
+
+  It accepts the following options:
+
+    - lt :: `t:number()` — Check number is less than value
+    - le :: `t:number()` — Check number is less than or equal to value
+    - gt :: `t:number()` — Check number is greater than value
+    - ge :: `t:number()` — Check number is greater than or equal to value
+    - int :: `t:boolean()` — Whether number must be integer, defaults to `false`
+    - step :: `t:integer()` — Check number is multiple of value. Implies `int`
+
+  ## Examples
+
+      iex> Xod.parse Xod.number(), 175.3
+      {:ok, 175.3}
+      
+      iex> Xod.parse! Xod.number(), nil
+      ** (Xod.XodError) Expected number, got nil (in path [])
+  """
+  @doc section: :schemas
+  defdelegate number(opts \\ []), to: Xod.Number, as: :new
+
+  @doc """
   Schema for validationg booleans
 
   It accepts the following options:
@@ -145,4 +168,144 @@ defmodule Xod do
   @doc section: :mods
   @spec regex(Xod.String.t(), Regex.t()) :: Xod.String.t()
   defdelegate regex(schema, value), to: Xod.String
+
+  @doc """
+  Set the `lt` option on a number schema
+
+  See: `Xod.number/1`
+
+  ## Example
+
+      iex> Xod.parse!(Xod.number() |> Xod.lt(10), 10)
+      ** (Xod.XodError) Number must be smaller than 10 (in path [])
+  """
+  @doc section: :mods
+  @spec lt(Xod.Number.t(), number()) :: Xod.Number.t()
+  defdelegate lt(schema, value), to: Xod.Number
+
+  @doc """
+  Set the `gt` option on a number schema
+
+  See: `Xod.number/1`
+
+  ## Example
+
+      iex> Xod.parse!(Xod.number() |> Xod.gt(10), 10)
+      ** (Xod.XodError) Number must be greater than 10 (in path [])
+  """
+  @doc section: :mods
+  @spec gt(Xod.Number.t(), number()) :: Xod.Number.t()
+  defdelegate gt(schema, value), to: Xod.Number
+
+  @doc """
+  Set the `le` option on a number schema
+
+  See: `Xod.number/1`
+
+  ## Example
+
+      iex> Xod.parse!(Xod.number() |> Xod.le(10), 11)
+      ** (Xod.XodError) Number must be smaller than or equal to 10 (in path [])
+  """
+  @doc section: :mods
+  @spec le(Xod.Number.t(), number()) :: Xod.Number.t()
+  defdelegate le(schema, value), to: Xod.Number
+
+  @doc """
+  Set the `ge` option on a number schema
+
+  See: `Xod.number/1`
+
+  ## Example
+
+      iex> Xod.parse!(Xod.number() |> Xod.ge(10), 9)
+      ** (Xod.XodError) Number must be greater than or equal to 10 (in path [])
+  """
+  @doc section: :mods
+  @spec ge(Xod.Number.t(), number()) :: Xod.Number.t()
+  defdelegate ge(schema, value), to: Xod.Number
+
+  @doc """
+  Set the `int` option on a number schema
+
+  See: `Xod.number/1`
+
+  ## Example
+
+      iex> Xod.parse!(Xod.number() |> Xod.int(true), 11.5)
+      ** (Xod.XodError) Expected integer, got float (in path [])
+  """
+  @doc section: :mods
+  @spec int(Xod.Number.t(), boolean()) :: Xod.Number.t()
+  defdelegate int(schema, value), to: Xod.Number
+
+  @doc """
+  Set the `step` option on a number schema
+
+  See: `Xod.number/1`
+
+  ## Example
+
+      iex> Xod.parse!(Xod.number() |> Xod.step(2), 11)
+      ** (Xod.XodError) Number must be multiple of 2 (in path [])
+  """
+  @doc section: :mods
+  @spec step(Xod.Number.t(), integer()) :: Xod.Number.t()
+  defdelegate step(schema, value), to: Xod.Number
+
+  @doc """
+  Changes a number schema to only match positive values
+
+  See: `Xod.number/1`
+
+  ## Example
+
+      iex> Xod.parse!(Xod.number() |> Xod.positive(), 0)
+      ** (Xod.XodError) Number must be greater than 0 (in path [])
+  """
+  @doc section: :mods
+  @spec positive(Xod.Number.t()) :: Xod.Number.t()
+  defdelegate positive(schema), to: Xod.Number
+
+  @doc """
+  Changes a number schema to only match non-negative values
+
+  See: `Xod.number/1`
+
+  ## Example
+
+      iex> Xod.parse!(Xod.number() |> Xod.nonnegative(), -1)
+      ** (Xod.XodError) Number must be greater than or equal to 0 (in path [])
+  """
+  @doc section: :mods
+  @spec nonnegative(Xod.Number.t()) :: Xod.Number.t()
+  defdelegate nonnegative(schema), to: Xod.Number
+
+  @doc """
+  Changes a number schema to only match negative values
+
+  See: `Xod.number/1`
+
+  ## Example
+
+      iex> Xod.parse!(Xod.number() |> Xod.negative(), 0)
+      ** (Xod.XodError) Number must be smaller than 0 (in path [])
+  """
+  @doc section: :mods
+  @spec negative(Xod.Number.t()) :: Xod.Number.t()
+  defdelegate negative(schema), to: Xod.Number
+
+  @doc """
+  Changes a number schema to only match non-positive values
+
+  See: `Xod.number/1`
+
+  ## Example
+
+      iex> Xod.parse!(Xod.number() |> Xod.nonpositive(), 1)
+      ** (Xod.XodError) Number must be smaller than or equal to 0 (in path [])
+  """
+  @doc section: :mods
+  @spec nonpositive(Xod.Number.t()) :: Xod.Number.t()
+  defdelegate nonpositive(schema), to: Xod.Number
 end
