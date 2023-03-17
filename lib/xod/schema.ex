@@ -53,5 +53,6 @@ defmodule Xod.Common do
   defmacro set_fields(fields) do
     {:__block__, [], Enum.map(fields, fn {k, t} -> set_field(k, t) end)}
   end
+
   # coveralls-ignore-end
 end

@@ -147,10 +147,10 @@ defmodule Xod do
   Takes the same options as `Xod.list/2`
 
   ## Examples
-  
+
       iex> Xod.parse Xod.keyword([x: Xod.number()]), [x: 13.0]
       {:ok, [x: 13.0]}
-
+      
       iex> Xod.parse! Xod.keyword([{0, Xod.number()}]), ["abc"]
       ** (Xod.XodError) Expected number, got string (in path [0])
   """
@@ -202,12 +202,112 @@ defmodule Xod do
   Schema that never matches any value
 
   ## Example
-       iex> Xod.parse!(Xod.never(), :some_value)
-       ** (Xod.XodError) Expected never, got atom (in path [])
+      iex> Xod.parse!(Xod.never(), :some_value)
+      ** (Xod.XodError) Expected never, got atom (in path [])
   """
   @doc section: :utils
   @spec never() :: Xod.Never.t()
   defdelegate never(), to: Xod.Never, as: :new
+
+  @doc """
+  Schema that matches with any value
+
+  ## Example
+      iex> Xod.parse Xod.list(Xod.any()), [1, "string", :atom, []]
+      {:ok, [1, "string", :atom, []]}
+  """
+  @doc section: :utils
+  @spec any() :: Xod.Any.t()
+  defdelegate any(), to: Xod.Any, as: :new
+
+  @doc """
+  Applies the passed `closure` to the result of the schema, if it validates
+
+  ## Example
+      iex> int_string_schema = Xod.number(int: true)
+      ...>   |> Xod.transform(&to_string/1)
+      iex> Xod.parse(int_string_schema, 27)
+      {:ok, "27"}
+  """
+  @doc section: :utils
+  @spec transform(Xod.Schema.t(), (term() -> term())) :: Xod.Transform.t()
+  defdelegate transform(schema, closure), to: Xod.Transform, as: :new
+
+  @doc """
+  Schema that only matches a specific value
+
+  It accepts the following options:
+    - `strict` :: `t:boolean/0` — Whether to use the strict equality operator
+    `===/2`. Defaults to false
+
+  ## Example
+
+      iex> Xod.parse Xod.literal(10), 10.0
+      {:ok, 10.0}
+      
+      iex> Xod.parse! Xod.literal(10, strict: true), 10.0
+      ** (Xod.XodError) Invalid literal value, expected 10 (in path [])
+  """
+  @doc section: :utils
+  @spec literal(term(), strict: boolean()) :: Xod.Literal.t()
+  defdelegate literal(value, options \\ []), to: Xod.Literal, as: :new
+
+  @doc """
+  Replaces provided value with default if `nil` before parsing with schema
+
+  ## Example
+
+      iex> Xod.parse(Xod.string() |> Xod.default("foo"), nil)
+      {:ok, "foo"}
+      
+      iex> Xod.parse(Xod.string() |> Xod.default("foo"), "bar")
+      {:ok, "bar"}
+  """
+  @doc section: :utils
+  @spec default(Xod.Schema.t(), term()) :: Xod.Default.t()
+  defdelegate default(schema, default), to: Xod.Default, as: :new
+
+  @doc """
+  Schema that validates value against a list of schemata and succeeds if at
+  least one matches.
+
+  ## Example
+
+      iex> Xod.parse(Xod.list(Xod.union([Xod.string(), Xod.number()])), ["abc", 4, "t"])
+      {:ok, ["abc", 4, "t"]}
+      
+      iex(5)> Xod.parse(Xod.union([Xod.string(), Xod.number()]), :atom)
+      {:error,
+       %Xod.XodError{ issues: [
+         type: :invalid_union,
+         path: [],
+         message: "Invalid input",
+         data: [
+           union_errors: [
+             %Xod.XodError{ issues: [
+               [
+                 type: :invalid_type,
+                 path: [],
+                 data: [expected: :string, got: :atom],
+                 message: "Expected string, got atom"
+               ]
+             ]},
+             %Xod.XodError{ issues: [
+               [
+                 type: :invalid_type,
+                 path: [],
+                 data: [expected: :number, got: :atom],
+                 message: "Expected number, got atom"
+               ]
+             ]}
+           ]
+         ]
+       ]}}
+  """
+  @doc section: :utils
+  @spec union([Xod.Schema.t()]) :: Xod.Union.t()
+  defdelegate union(schemata), to: Xod.Union, as: :new
+
   # Modifiers
   # =========
 
