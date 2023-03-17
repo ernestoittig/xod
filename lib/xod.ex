@@ -53,6 +53,23 @@ defmodule Xod do
   @spec string(Xod.String.args()) :: Xod.String.t()
   defdelegate string(opts \\ []), to: Xod.String, as: :new
 
+  @doc """
+  Schema for validationg booleans
+
+  It accepts the following options:
+    - `coerce` :: `t:boolean()` — Coerce truthy or falsy values to boolean, defaults to `false`
+
+  ## Examples
+
+      iex> Xod.parse Xod.boolean(), true
+      {:ok, true}
+      
+      iex> Xod.parse! Xod.boolean(), {3.0, "abc"}
+      ** (Xod.XodError) Expected boolean, got tuple (in path [])
+  """
+  @doc section: :schemas
+  defdelegate boolean(opts \\ []), to: Xod.Boolean, as: :new
+
   # Modifiers
   # =========
 
