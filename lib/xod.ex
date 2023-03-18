@@ -279,7 +279,7 @@ defmodule Xod do
       iex(5)> Xod.parse(Xod.union([Xod.string(), Xod.number()]), :atom)
       {:error,
        %Xod.XodError{ issues: [
-         type: :invalid_union,
+        [type: :invalid_union,
          path: [],
          message: "Invalid input",
          data: [
@@ -302,7 +302,7 @@ defmodule Xod do
              ]}
            ]
          ]
-       ]}}
+      ]]}}
   """
   @doc section: :utils
   @spec union([Xod.Schema.t()]) :: Xod.Union.t()

@@ -118,11 +118,13 @@ defmodule Xod.Union do
           {:error,
            %Xod.XodError{
              issues: [
-               type: :invalid_union,
-               path: path,
-               message: "Invalid input",
-               data: [
-                 union_errors: errors
+               [
+                 type: :invalid_union,
+                 path: path,
+                 message: "Invalid input",
+                 data: [
+                   union_errors: errors
+                 ]
                ]
              ]
            }}
